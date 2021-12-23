@@ -1,57 +1,45 @@
-#dadabase
-from fastapi.exceptions import HTTPException
-from pydantic.utils import truncate
-from database import database as conenection
+import json
+from fastapi.applications import FastAPI
 from database import Heroe
-from schemas import heroeModel
-
-from fastapi import FastAPI
-from fastapi import HTTPException
+from database import database as conenection
+from schemas import HeroSchema, HeroSchemaPydantic
 
 app = FastAPI()
-
 
 
 @app.on_event('startup')
 def startup():
     if not conenection.is_closed():
         conenection.connect()
-    
-    # conenection.create_tables([heroes])
+
 
 @app.on_event('shutdown')
 def shutdown():
     if not conenection.is_closed():
         conenection.close()
 
-@app.get("/")    #recibir datos del servidor
-def home():
-    return  {"Hello": "Worldssss"}
 
-@app.post("/heroe/new") #enviar informacion al servidor
-async def create_Heroe(heroe: heroeModel): #si hay (...) significa que el parametro es obligatorio
-    heroe = Heroe.create(
-        alter_ego = Heroe.alter_ego,
-        real_name = Heroe.real_name,
-        universe = Heroe.universe,
-        state = Heroe.state
+@app.get("/hero")
+async def get():
+    heroes = Heroe.select()
+    schema = HeroSchema()
+    return json.loads(schema.dumps(heroes,many=True).encode('utf-8'))
+
+
+@app.get("/hero/{pk}")
+async def get_object(pk: int):
+    hero = Heroe.select().where(Heroe.id == pk).first()
+    schema = HeroSchema()
+    return json.loads(schema.dumps(hero).encode('utf-8'))
+
+
+@app.post("/hero")
+async def post(heroe: HeroSchemaPydantic):
+    hero = Heroe.create(
+        alter_ego = heroe.alter_ego,
+        real_name = heroe.real_name,
+        universe = heroe.universe,
+        state = heroe.state
     )
-
-@app.get("/heroe/mostrar/{nombre}") #traer informacion
-async def create_Heroe(nombre):
-    heroe = Heroe.select().where(Heroe.alter_ego == nombre).firs()
-
-    if heroe:
-        return Heroe
-    else:
-        return HTTPException(404, 'ususario no encontrado')
-
-@app.delete("/heroe/editar/{nombre_heroe}")     #put es para actualizar
-async def create_eliminar(nombre_heroe):
-    user = Heroe.select().where(Heroe.alter_ego == nombre_heroe).first()
-
-    if user:
-        user.delete_instance()
-        return True
-    else:
-        return HTTPException(404, 'ususario no encontrado')
+    schema = HeroSchema()
+    return json.loads(schema.dumps(hero).encode('utf-8'))
