@@ -1,9 +1,10 @@
 from peewee import *
-from peewee import CharField
+from peewee import MySQLDatabase, Model, CharField
+
 database = MySQLDatabase(
-    'datos',
-    user='root', 
-    password='root',
+    'test_umh',
+    user='test',
+    password='123',
     host= 'localhost', port= 3306
 
 )
@@ -15,8 +16,8 @@ class Heroe(Model):
     state = CharField(max_length=50)
 
     def __str__(self):
-        return self.alter_ego        
+        return self.alter_ego
 
-class Meta:
-    database = database
-    table_name ='heroes'
+    class Meta:
+        database = database
+        table_name ='heroes'
